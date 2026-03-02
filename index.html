@@ -3,15 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>China Adventure 2026 - Interactive Map</title>
+    <title>China Trip Planner - Ultimate Interactive Builder</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
@@ -26,378 +22,1434 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.15);
         }
         
-        #header h1 {
-            font-size: 2em;
-            margin-bottom: 8px;
-        }
+        #header h1 { font-size: 2em; margin-bottom: 8px; }
+        #header p { font-size: 1em; opacity: 0.95; }
         
-        #header p {
-            font-size: 1.1em;
-            opacity: 0.95;
-        }
-        
-        #container {
-            display: flex;
-            height: calc(100vh - 100px);
-        }
-        
-        #map {
-            flex: 1;
-            height: 100%;
-        }
-        
+        #container { display: flex; height: calc(100vh - 100px); }
         #sidebar {
-            width: 400px;
+            width: 420px;
             background: white;
             overflow-y: auto;
-            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 10;
         }
+        #map { flex: 1; height: 100%; }
+        
+        .section { padding: 20px; border-bottom: 2px solid #f0f0f0; }
+        .section h2 {
+            color: #DC143C;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .city-selector {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            margin: 8px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .city-selector:hover {
+            background: #fff;
+            border-color: #DC143C;
+            transform: translateX(3px);
+        }
+        
+        .city-selector.selected {
+            background: #e8f5e9;
+            border-color: #27AE60;
+            box-shadow: 0 2px 8px rgba(39, 174, 96, 0.2);
+        }
+        
+        .city-info { flex: 1; cursor: pointer; }
+        .city-name {
+            font-weight: 600;
+            color: #2C3E50;
+            font-size: 1em;
+            margin-bottom: 3px;
+        }
+        .city-desc { font-size: 0.85em; color: #7F8C8D; }
+        
+        .nights-control { display: flex; align-items: center; gap: 8px; }
+        .nights-btn {
+            width: 30px;
+            height: 30px;
+            border: 2px solid #DC143C;
+            background: white;
+            color: #DC143C;
+            border-radius: 50%;
+            font-size: 1.2em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .nights-btn:hover {
+            background: #DC143C;
+            color: white;
+            transform: scale(1.1);
+        }
+        .nights-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .nights-display {
+            font-weight: bold;
+            color: #DC143C;
+            min-width: 60px;
+            text-align: center;
+            font-size: 0.95em;
+        }
+        
+        .checkbox { width: 20px; height: 20px; cursor: pointer; margin-right: 10px; }
+        
+        .summary-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 1em;
+        }
+        .summary-item strong { font-size: 1.1em; }
+        
+        .btn-primary {
+            background: #27AE60;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+        .btn-primary:hover {
+            background: #229954;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #3498DB;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+        }
+        
+        #resetBtn { background: #E74C3C; }
+        #resetBtn:hover { background: #C0392B; }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .badge-main { background: #E8F5E9; color: #27AE60; }
+        .badge-bonus { background: #FFF8E7; color: #F39C12; }
+        .badge-spa { background: #E3F2FD; color: #3498DB; }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 0.9em;
+        }
+        .alert-info { background: #E3F2FD; border-left: 4px solid #3498DB; color: #004085; }
+        .alert-success { background: #E8F5E9; border-left: 4px solid #27AE60; color: #155724; }
+        .alert-warning { background: #FFF3CD; border-left: 4px solid #F39C12; color: #856404; }
+        
+        .itinerary-section {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+        }
+        .itinerary-section.visible { max-height: 10000px; }
         
         .day-card {
-            padding: 20px;
-            border-bottom: 2px solid #f0f0f0;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .day-card:hover {
-            background: #f8f9fa;
-        }
-        
-        .day-card.active {
-            background: #e8f5e9;
-            border-left: 5px solid #27AE60;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 12px 0;
         }
         
         .day-header {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 15px;
             margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
         }
         
         .day-number {
-            background: #DC143C;
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
             font-size: 1.2em;
-            flex-shrink: 0;
+            font-weight: bold;
+            color: #DC143C;
         }
         
-        .day-info {
-            flex: 1;
-        }
-        
-        .day-info h3 {
-            color: #2C3E50;
-            font-size: 1.15em;
-            margin-bottom: 3px;
-        }
-        
-        .day-info .date {
-            color: #7F8C8D;
-            font-size: 0.9em;
-        }
-        
-        .city-badge {
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 0.8em;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        
-        .badge-hk { background: #FCE4EC; color: #E74C3C; }
-        .badge-zjj { background: #E8F5E9; color: #27AE60; }
-        .badge-cq { background: #FFF8E7; color: #E67E22; }
-        .badge-cd { background: #FFF3E0; color: #F39C12; }
-        .badge-bj { background: #FFEBEE; color: #DC143C; }
-        .badge-sh { background: #E3F2FD; color: #3498DB; }
-        
-        .nights {
-            color: #7F8C8D;
-            font-size: 0.85em;
-            margin-top: 8px;
-            font-weight: 500;
-        }
-        
-        .activities {
-            margin-top: 15px;
-        }
-        
-        .activity {
-            padding: 8px 12px;
-            border-left: 3px solid #3498DB;
-            margin-bottom: 8px;
+        .activity-item {
             background: #f8f9fa;
+            padding: 10px;
+            margin: 8px 0;
+            border-left: 3px solid #3498DB;
             border-radius: 0 5px 5px 0;
         }
         
-        .activity-title {
-            font-weight: 600;
-            color: #2C3E50;
-            font-size: 0.95em;
-            margin-bottom: 3px;
-        }
-        
-        .activity-detail {
+        .activity-time { font-size: 0.85em; color: #7F8C8D; font-weight: 600; }
+        .activity-name { font-weight: 600; color: #2C3E50; margin: 5px 0; }
+        .activity-detail { font-size: 0.9em; color: #555; }
+        .activity-cost {
             font-size: 0.85em;
-            color: #555;
-            line-height: 1.4;
+            color: #27AE60;
+            font-weight: 600;
+            margin-top: 3px;
         }
         
-        .transport {
-            margin-top: 15px;
-            padding: 12px;
-            background: #E3F2FD;
+        .spa-highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-left-color: #764ba2;
+        }
+        .spa-highlight .activity-time,
+        .spa-highlight .activity-name,
+        .spa-highlight .activity-detail,
+        .spa-highlight .activity-cost {
+            color: white;
+        }
+        
+        .budget-breakdown {
+            background: white;
+            border: 2px solid #e0e0e0;
             border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .budget-category {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .budget-category:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 1.1em;
+            padding-top: 12px;
+            border-top: 2px solid #DC143C;
+            color: #DC143C;
+        }
+        
+        .budget-label { color: #2C3E50; }
+        .budget-amount { color: #27AE60; font-weight: 600; }
+        
+        .flight-info {
+            background: #E3F2FD;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
             border-left: 4px solid #3498DB;
         }
         
-        .transport strong {
+        .flight-route {
+            font-weight: 600;
             color: #2C3E50;
-            display: block;
-            margin-bottom: 4px;
-        }
-        
-        .transport-detail {
-            font-size: 0.9em;
-            color: #2C3E50;
+            margin: 5px 0;
         }
         
         @media (max-width: 768px) {
-            #container {
-                flex-direction: column;
-            }
-            
-            #sidebar {
-                width: 100%;
-                height: 50vh;
-            }
-            
-            #map {
-                height: 50vh;
-            }
+            #container { flex-direction: column; }
+            #sidebar { width: 100%; height: 70vh; }
+            #map { height: 30vh; }
         }
     </style>
 </head>
 <body>
     <div id="header">
-        <h1>🇨🇳 China Adventure 2026</h1>
-        <p>April 10-26 • 16 Days • 6 Cities • Montreal → Toronto</p>
+        <h1>🗺️ China Trip Planner</h1>
+        <p>April 10-26, 2026 • Montreal → China → Toronto</p>
     </div>
     
     <div id="container">
+        <div id="sidebar">
+            <div class="section">
+                <h2>🎯 Your Trip Summary</h2>
+                <div class="summary-box">
+                    <div class="summary-item">
+                        <span>Trip Dates:</span>
+                        <strong>Apr 10-26 (16 days)</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Nights in China:</span>
+                        <strong id="daysInChina">0</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Cities Selected:</span>
+                        <strong id="citiesCount">0</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Est. Budget:</span>
+                        <strong id="budgetEst">$0 CAD</strong>
+                    </div>
+                </div>
+                
+                <div id="liveBudgetBreakdown" style="display: none;">
+                    <h3 style="color: #2874A6; margin: 15px 0 10px 0;">💰 Live Budget Breakdown</h3>
+                    <div style="background: white; border: 2px solid #e0e0e0; border-radius: 8px; padding: 15px;">
+                        <div class="budget-category">
+                            <span class="budget-label">✈️ Flights</span>
+                            <span class="budget-amount" id="live-flights">$0</span>
+                        </div>
+                        <div style="font-size: 0.85em; color: #7F8C8D; padding-left: 25px; margin-bottom: 8px;" id="flight-details">
+                            Montreal→HK: $839
+                        </div>
+                        
+                        <div class="budget-category" style="cursor: pointer;" id="hotels-header">
+                            <span class="budget-label">🏨 Hotels <span style="font-size: 0.8em; color: #3498DB;">▼ Click for details</span></span>
+                            <span class="budget-amount" id="live-hotels">$0</span>
+                        </div>
+                        <div style="font-size: 0.85em; color: #7F8C8D; padding-left: 25px; margin-bottom: 8px;" id="hotel-details">
+                            0 nights total
+                        </div>
+                        <div id="hotel-breakdown" style="display: none; padding-left: 25px; margin-bottom: 12px; background: #f8f9fa; border-radius: 6px; padding: 12px; margin-top: 8px;">
+                        </div>
+                        
+                        <div class="budget-category">
+                            <span class="budget-label">🍜 Food & Drinks</span>
+                            <span class="budget-amount" id="live-food">$0</span>
+                        </div>
+                        
+                        <div class="budget-category" style="cursor: pointer; position: relative;" id="activities-header">
+                            <span class="budget-label">🎯 Activities <span style="font-size: 0.8em; color: #3498DB;">▼ Click for details</span></span>
+                            <span class="budget-amount" id="live-activities">$0</span>
+                        </div>
+                        <div style="font-size: 0.85em; color: #7F8C8D; padding-left: 25px; margin-bottom: 8px;" id="activity-details">
+                            Essential activities only
+                        </div>
+                        <div id="activity-breakdown" style="display: none; padding-left: 25px; margin-bottom: 12px; background: #f8f9fa; border-radius: 6px; padding: 12px; margin-top: 8px;">
+                        </div>
+                        
+                        <div class="budget-category">
+                            <span class="budget-label">🚄 Transport</span>
+                            <span class="budget-amount" id="live-transport">$0</span>
+                        </div>
+                        <div style="font-size: 0.85em; color: #7F8C8D; padding-left: 25px; margin-bottom: 8px;" id="transport-details">
+                            Trains & buses between cities
+                        </div>
+                        
+                        <div class="budget-category" style="border-top: 2px solid #DC143C; padding-top: 12px; margin-top: 8px; font-size: 1.1em; color: #DC143C;">
+                            <span class="budget-label">TOTAL PER PERSON</span>
+                            <span class="budget-amount" id="live-total">$0</span>
+                        </div>
+                        <div style="background: #E8F5E9; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 0.9em;">
+                            <strong style="color: #27AE60;">For 4 People:</strong> <span id="live-total-4" style="color: #27AE60; font-weight: 600;">$0 CAD</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="routeDisplay"></div>
+                <div id="flightInfo"></div>
+            </div>
+            
+            <div class="section">
+                <h2>🏙️ Main Cities</h2>
+                <div id="mainCities"></div>
+            </div>
+            
+            <div class="section">
+                <h2>✨ Bonus Destinations</h2>
+                <div id="bonusCities"></div>
+            </div>
+            
+            <div class="section">
+                <button class="btn-primary" id="generateBtn">🎯 Generate Full Itinerary</button>
+                <button class="btn-secondary" id="saveBtn">💾 Save My Trip</button>
+                <button class="btn-primary" id="resetBtn">🔄 Reset Everything</button>
+            </div>
+            
+            <div class="section itinerary-section" id="itinerarySection">
+                <h2>📅 Your Day-by-Day Itinerary</h2>
+                <div id="itineraryContent"></div>
+            </div>
+            
+            <div class="section itinerary-section" id="budgetSection">
+                <h2>💰 Detailed Budget Breakdown</h2>
+                <div id="budgetContent"></div>
+            </div>
+        </div>
+        
         <div id="map"></div>
-        <div id="sidebar"></div>
     </div>
 
     <script>
-        const map = L.map('map').setView([32, 110], 5);
+        const TRIP_START = new Date('2026-04-10');
+        const TRIP_END = new Date('2026-04-26');
+        const TOTAL_DAYS = 16;
+        const TRAVEL_DAYS = 2;
+        const MAX_DAYS_IN_CHINA = 14;
         
+        const map = L.map('map').setView([32, 110], 5);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors',
+            attribution: '© OpenStreetMap',
             maxZoom: 18
         }).addTo(map);
 
-        const cities = {
-            hk: { coords: [22.3, 114.2], name: 'Hong Kong', color: '#E74C3C' },
-            zjj: { coords: [29.1, 110.5], name: 'Zhangjiajie', color: '#27AE60' },
-            cq: { coords: [29.6, 106.5], name: 'Chongqing', color: '#E67E22' },
-            cd: { coords: [30.7, 104.1], name: 'Chengdu', color: '#F39C12' },
-            bj: { coords: [39.9, 116.4], name: 'Beijing', color: '#DC143C' },
-            sh: { coords: [31.2, 121.5], name: 'Shanghai', color: '#3498DB' }
+        const returnFlightPrices = {
+            hongkong: 820,
+            shanghai: 780,
+            beijing: 800,
+            xian: 850,
+            chengdu: 870,
+            chongqing: 880,
+            zhangjiajie: 950,
+            guilin: 900,
+            yangshuo: 920,
+            fenghuang: 940,
+            furong: 940,
+            wangxian: 930
         };
 
-        const tripData = [
-            {
-                day: 1,
-                date: 'April 10',
-                title: 'Departure from Montreal',
-                city: null,
-                badge: 'badge-hk',
-                activities: [
-                    { title: '✈️ Flight YUL → HKG', detail: 'Depart 18:00, overnight flight (~18 hours with connection)' }
-                ],
-                transport: null
+        const cities = {
+            hongkong: {
+                name: 'Hong Kong',
+                desc: 'Victoria Peak, Dim Sum',
+                coords: [22.3, 114.2],
+                color: '#E74C3C',
+                minNights: 1,
+                maxNights: 4,
+                defaultNights: 1,
+                costPerNight: 100,
+                dailyFood: 50,
+                region: 'south',
+                type: 'main',
+                isInternationalHub: true,
+                activities: {
+                    essential: [
+                        { name: 'Victoria Peak', time: 'Morning', detail: 'Peak Tram + Sky Terrace ⭐4.6★', cost: 100, duration: '3hrs' },
+                        { name: 'Star Ferry', time: 'Afternoon', detail: '10-min harbour crossing - best at sunset!', cost: 3, duration: '30min' },
+                        { name: 'Tim Ho Wan Dim Sum', time: 'Lunch', detail: 'Michelin-starred! BBQ pork buns', cost: 60, duration: '1.5hrs' }
+                    ],
+                    optional: [
+                        { name: 'Temple Street Market', time: 'Evening', detail: 'Street food, fortune tellers', cost: 40, duration: '2hrs' }
+                    ]
+                },
+                hasSpa: false
             },
-            {
-                day: 2,
-                date: 'April 12-13',
-                title: 'Hong Kong',
-                city: 'hk',
-                badge: 'badge-hk',
-                nights: '1 night',
-                activities: [
-                    { title: 'Victoria Peak 🏔️', detail: 'Peak Tram + Sky Terrace ⭐4.6★ - HKD $100 (~CAD $18)' },
-                    { title: 'Star Ferry ⛴️', detail: 'HKD $2.70 - 10 min ride, best at sunset!' },
-                    { title: 'Tim Ho Wan Dim Sum 🥟', detail: 'Michelin-starred! HKD $50-80/person' },
-                    { title: 'Temple Street Night Market 🌙', detail: 'After 7pm - street food, fortune tellers' }
-                ],
-                transport: '🚄 April 13, 08:30 → Zhangjiajie (6.5 hours direct train, ¥769 ~CAD $110)'
+            zhangjiajie: {
+                name: 'Zhangjiajie',
+                desc: 'Avatar Mountains',
+                coords: [29.1, 110.5],
+                color: '#27AE60',
+                minNights: 1,
+                maxNights: 5,
+                defaultNights: 3,
+                costPerNight: 85,
+                dailyFood: 35,
+                region: 'central',
+                type: 'main',
+                isInternationalHub: false,
+                activities: {
+                    essential: [
+                        { name: 'Avatar Forest Park', time: 'Full Day', detail: 'Bailong Elevator ⚠️ BOOK AHEAD', cost: 300, duration: '8hrs' },
+                        { name: 'Tianmen Mountain', time: 'Full Day', detail: 'Glass Skywalk ⚠️ BOOK AHEAD', cost: 278, duration: '8hrs' },
+                        { name: 'Glass Bridge', time: 'Half Day', detail: 'World\'s highest!', cost: 138, duration: '4hrs' }
+                    ],
+                    optional: []
+                },
+                hasSpa: false
             },
-            {
-                day: 3,
-                date: 'April 13-16',
-                title: 'Zhangjiajie - Avatar Mountains',
-                city: 'zjj',
-                badge: 'badge-zjj',
-                nights: '3 nights',
-                activities: [
-                    { title: 'Day 1: Avatar Forest Park 🏔️', detail: '3-day pass ¥228, Bailong Elevator ¥72 ⚠️ BOOK 1-2 WEEKS AHEAD!' },
-                    { title: 'Day 2: Tianmen Mountain 🚠', detail: 'World\'s longest cable car 7.5km, Glass Skywalk ¥278 ⚠️ BOOK AHEAD!' },
-                    { title: 'Day 3: Glass Bridge 🌉', detail: '430m long, 300m high - World\'s highest! ¥138' }
-                ],
-                transport: '🚄 April 16, Evening → Chongqing (2-4 hours train, ¥200-300)'
+            chongqing: {
+                name: 'Chongqing',
+                desc: 'Cyberpunk City',
+                coords: [29.6, 106.5],
+                color: '#E67E22',
+                minNights: 1,
+                maxNights: 3,
+                defaultNights: 2,
+                costPerNight: 50,
+                dailyFood: 40,
+                region: 'west',
+                type: 'main',
+                isInternationalHub: false,
+                activities: {
+                    essential: [
+                        { name: 'Hongya Cave', time: 'Evening', detail: 'After 7PM when lit! FREE', cost: 0, duration: '2hrs' },
+                        { name: 'Chongqing Hotpot', time: 'Dinner', detail: 'Spiciest in China!', cost: 100, duration: '2hrs' },
+                        { name: 'Liziba Metro', time: 'Midday', detail: 'Train through building', cost: 0, duration: '30min' }
+                    ],
+                    optional: [
+                        { name: 'Eling Park', time: 'Afternoon', detail: 'FREE views', cost: 0, duration: '1.5hrs' }
+                    ]
+                },
+                hasSpa: false
             },
-            {
-                day: 4,
-                date: 'April 16-18',
-                title: 'Chongqing - Cyberpunk City',
-                city: 'cq',
-                badge: 'badge-cq',
-                nights: '2 nights',
-                activities: [
-                    { title: 'Liziba Metro Station 🚇', detail: 'Train goes THROUGH 19-story building! Visit ~noon' },
-                    { title: 'Eling Park 🌳', detail: 'FREE panoramic city views from hilltop tower' },
-                    { title: 'Hongya Cave 🏮', detail: 'After 7pm when LIT UP - looks like Spirited Away!' },
-                    { title: 'Chongqing Hotpot 🌶️', detail: 'Spiciest in China! ¥80-120/person - the ultimate experience' }
-                ],
-                transport: '🚄 April 18, ~13:00 → Chengdu (1.5 hours train, ¥56-150)'
+            chengdu: {
+                name: 'Chengdu',
+                desc: 'Pandas + 24hr Spa',
+                coords: [30.7, 104.1],
+                color: '#F39C12',
+                minNights: 1,
+                maxNights: 4,
+                defaultNights: 2,
+                costPerNight: 65,
+                dailyFood: 35,
+                region: 'west',
+                type: 'main',
+                isInternationalHub: true,
+                activities: {
+                    essential: [
+                        { name: 'Panda Base', time: '7:30 AM!', detail: '⚠️ ARRIVE EARLY!', cost: 58, duration: '3hrs' },
+                        { name: 'Cheersum 24hr Spa', time: '24 Hours', detail: '🧖 Sleep overnight in pods!', cost: 300, duration: '24hrs', isSpa: true },
+                        { name: 'Sichuan Dinner', time: 'Evening', detail: 'Mapo tofu, hotpot', cost: 50, duration: '1.5hrs' }
+                    ],
+                    optional: [
+                        { name: 'Jinli Street', time: 'Evening', detail: 'Ancient street', cost: 40, duration: '2hrs' }
+                    ]
+                },
+                hasSpa: true
             },
-            {
-                day: 5,
-                date: 'April 18-20',
-                title: 'Chengdu - Pandas + 24hr Spa',
-                city: 'cd',
-                badge: 'badge-cd',
-                nights: '2 nights',
-                activities: [
-                    { title: 'Chengdu Panda Base 🐼', detail: '⚠️ ARRIVE 7:30 AM! Pandas most active at breakfast. Entry ¥58' },
-                    { title: 'Cheersum 24-Hour Spa 🧖', detail: '¥300 (~CAD $60) - SLEEP OVERNIGHT in pods!' },
-                    { title: 'Spa Includes:', detail: '7 floors: hot tubs, saunas, pools, FREE unlimited buffet (4 meals/day!), gaming room, 2 cinemas with BEDS, ice cream ALL DAY' }
-                ],
-                transport: '✈️ April 21, Afternoon flight → Beijing (3 hours, CAD $150-200)'
+            beijing: {
+                name: 'Beijing',
+                desc: 'Great Wall, Forbidden City',
+                coords: [39.9, 116.4],
+                color: '#DC143C',
+                minNights: 1,
+                maxNights: 5,
+                defaultNights: 3,
+                costPerNight: 100,
+                dailyFood: 50,
+                region: 'north',
+                type: 'main',
+                isInternationalHub: true,
+                activities: {
+                    essential: [
+                        { name: 'Great Wall', time: 'Full Day', detail: 'Toboggan down!', cost: 400, duration: '9hrs' },
+                        { name: 'Forbidden City', time: 'Morning', detail: '⚠️ BOOK 10 DAYS AHEAD', cost: 60, duration: '4hrs' },
+                        { name: 'Beijing Duck', time: 'Evening', detail: 'Quanjude/Dadong', cost: 120, duration: '2hrs' }
+                    ],
+                    optional: [
+                        { name: 'Jingshan Park', time: 'Afternoon', detail: 'Best view', cost: 2, duration: '1hr' },
+                        { name: 'Temple of Heaven', time: 'Morning', detail: 'Imperial temple', cost: 28, duration: '2hrs' }
+                    ]
+                },
+                hasSpa: false
             },
-            {
-                day: 6,
-                date: 'April 21-23',
-                title: 'Beijing - Imperial Capital',
-                city: 'bj',
-                badge: 'badge-bj',
-                nights: '3 nights',
-                activities: [
-                    { title: 'Mutianyu Great Wall 🏯', detail: 'Full day tour - Cable car UP, TOBOGGAN DOWN! ~¥400 (CAD $80)' },
-                    { title: 'Forbidden City 🏛️', detail: '⚠️ BOOK ONLINE 10 DAYS AHEAD - SELLS OUT! ¥60, 980 buildings' },
-                    { title: 'Jingshan Park 🌳', detail: 'Best Forbidden City view from hilltop - ¥2 only!' },
-                    { title: 'Beijing Duck Dinner 🦆', detail: 'Quanjude or Dadong restaurant - the ultimate Beijing meal' }
-                ],
-                transport: '🚄 April 23, ~18:00 → Shanghai (4.5-5 hours train, ¥550-900)'
+            shanghai: {
+                name: 'Shanghai',
+                desc: 'The Bund, Modern Marvel',
+                coords: [31.2, 121.5],
+                color: '#3498DB',
+                minNights: 1,
+                maxNights: 5,
+                defaultNights: 3,
+                costPerNight: 95,
+                dailyFood: 45,
+                region: 'east',
+                type: 'main',
+                isInternationalHub: true,
+                activities: {
+                    essential: [
+                        { name: 'The Bund', time: '6:30 PM', detail: '💡 GOLDEN HOUR!', cost: 0, duration: '2hrs' },
+                        { name: 'Shanghai Tower', time: 'Morning', detail: '632m tall!', cost: 180, duration: '2hrs' },
+                        { name: 'Jia Jia Tang Bao', time: 'Lunch', detail: 'BEST xiaolongbao', cost: 40, duration: '1hr' }
+                    ],
+                    optional: [
+                        { name: 'Yu Garden', time: 'Morning', detail: 'Ming Dynasty garden', cost: 40, duration: '2hrs' },
+                        { name: 'Nanjing Road', time: 'Afternoon', detail: 'Shopping street', cost: 50, duration: '2hrs' }
+                    ]
+                },
+                hasSpa: false
             },
-            {
-                day: 7,
-                date: 'April 23-26',
-                title: 'Shanghai - Modern Marvel',
-                city: 'sh',
-                badge: 'badge-sh',
-                nights: '3 nights',
-                activities: [
-                    { title: 'The Bund 🌆', detail: '💡 6:30-7:30PM = GOLDEN HOUR! Best photos of colonial + futuristic skyline' },
-                    { title: 'Shanghai Tower 🏙️', detail: '632m - 2nd tallest in WORLD! Fastest elevator. ¥180 (~CAD $36)' },
-                    { title: 'Yu Garden 🏯', detail: 'Ming Dynasty classical garden - ¥40' },
-                    { title: 'Jia Jia Tang Bao 🥟', detail: 'Shanghai\'s BEST xiaolongbao (soup dumplings) - often a line but WORTH IT!' }
-                ],
-                transport: '✈️ April 26 (Saturday) → Toronto YYZ (14-15 hours direct flight, CAD $750-900)'
+            xian: {
+                name: "Xi'an",
+                desc: 'Terracotta Warriors',
+                coords: [34.3, 108.9],
+                color: '#D35400',
+                minNights: 1,
+                maxNights: 4,
+                defaultNights: 2,
+                costPerNight: 70,
+                dailyFood: 40,
+                region: 'northwest',
+                type: 'main',
+                isInternationalHub: true,
+                activities: {
+                    essential: [
+                        { name: 'Terracotta Warriors', time: 'Full Day', detail: '8,000 soldiers!', cost: 150, duration: '6hrs' },
+                        { name: 'City Wall', time: 'Afternoon', detail: 'Bike 14km wall', cost: 54, duration: '3hrs' },
+                        { name: 'Muslim Quarter', time: 'Evening', detail: 'Food street', cost: 60, duration: '2hrs' }
+                    ],
+                    optional: [
+                        { name: 'Big Wild Goose Pagoda', time: 'Morning', detail: 'Buddhist pagoda', cost: 40, duration: '2hrs' }
+                    ]
+                },
+                hasSpa: false
+            },
+            guilin: {
+                name: 'Guilin',
+                desc: 'Li River Cruise',
+                coords: [25.3, 110.3],
+                color: '#1ABC9C',
+                minNights: 1,
+                maxNights: 3,
+                defaultNights: 2,
+                costPerNight: 70,
+                dailyFood: 35,
+                region: 'south',
+                type: 'bonus',
+                isInternationalHub: false,
+                activities: {
+                    essential: [
+                        { name: 'Li River Cruise', time: 'Full Day', detail: 'On ¥20 bill!', cost: 250, duration: '7hrs' },
+                        { name: 'Reed Flute Cave', time: 'Morning', detail: 'Limestone cave', cost: 90, duration: '2hrs' }
+                    ],
+                    optional: []
+                },
+                hasSpa: false
+            },
+            yangshuo: {
+                name: 'Yangshuo',
+                desc: 'Countryside Biking',
+                coords: [24.8, 110.5],
+                color: '#16A085',
+                minNights: 1,
+                maxNights: 3,
+                defaultNights: 1,
+                costPerNight: 60,
+                dailyFood: 30,
+                region: 'south',
+                type: 'bonus',
+                isInternationalHub: false,
+                activities: {
+                    essential: [
+                        { name: 'Countryside Biking', time: 'Full Day', detail: 'Rice paddies', cost: 30, duration: '6hrs' },
+                        { name: 'Moon Hill', time: 'Morning', detail: 'Natural arch', cost: 15, duration: '2hrs' }
+                    ],
+                    optional: []
+                },
+                hasSpa: false
+            },
+            fenghuang: {
+                name: 'Fenghuang',
+                desc: 'Red Lantern Town',
+                coords: [27.9, 109.6],
+                color: '#9B59B6',
+                minNights: 1,
+                maxNights: 2,
+                defaultNights: 1,
+                costPerNight: 45,
+                dailyFood: 30,
+                region: 'central',
+                type: 'bonus',
+                isInternationalHub: false,
+                activities: {
+                    essential: [
+                        { name: 'Ancient Town', time: 'Afternoon', detail: 'FREE! Stilted houses', cost: 0, duration: '3hrs' },
+                        { name: 'Night Lanterns', time: '7-9 PM', detail: '💡 BEST TIME!', cost: 0, duration: '2hrs' }
+                    ],
+                    optional: []
+                },
+                hasSpa: false
+            },
+            furong: {
+                name: 'Furong',
+                desc: 'Waterfall Town',
+                coords: [28.5, 109.7],
+                color: '#8E44AD',
+                minNights: 1,
+                maxNights: 2,
+                defaultNights: 1,
+                costPerNight: 40,
+                dailyFood: 30,
+                region: 'central',
+                type: 'bonus',
+                isInternationalHub: false,
+                activities: {
+                    essential: [
+                        { name: '60m Waterfall', time: 'All Day', detail: 'FREE! Through town', cost: 0, duration: '4hrs' },
+                        { name: 'Light Show', time: '8 PM', detail: 'Illuminated waterfall', cost: 0, duration: '1hr' }
+                    ],
+                    optional: []
+                },
+                hasSpa: false
+            },
+            wangxian: {
+                name: 'Wangxian Valley (Shangrao)',
+                desc: 'Hidden Canyon',
+                coords: [28.45, 117.97],
+                color: '#2ECC71',
+                minNights: 1,
+                maxNights: 2,
+                defaultNights: 1,
+                costPerNight: 50,
+                dailyFood: 30,
+                region: 'east',
+                type: 'bonus',
+                isInternationalHub: false,
+                activities: {
+                    essential: [
+                        { name: 'Glass Walkway', time: 'Morning', detail: 'Cliff views', cost: 128, duration: '3hrs' },
+                        { name: 'Waterfall Hiking', time: 'Afternoon', detail: 'Multiple waterfalls', cost: 0, duration: '4hrs' }
+                    ],
+                    optional: []
+                },
+                hasSpa: false
             }
-        ];
+        };
 
-        const markers = {};
-        Object.entries(cities).forEach(([key, city]) => {
-            markers[key] = L.circleMarker(city.coords, {
-                radius: 12,
-                fillColor: city.color,
-                color: '#fff',
-                weight: 3,
-                opacity: 1,
-                fillOpacity: 0.9
-            }).addTo(map).bindPopup('<strong style="color:' + city.color + '; font-size: 1.1em;">' + city.name + '</strong>');
-        });
+        let selectedCities = {};
+        let markers = {};
+        let routeLine = null;
 
-        L.polyline([
-            cities.hk.coords,
-            cities.zjj.coords,
-            cities.cq.coords,
-            cities.cd.coords,
-            cities.bj.coords,
-            cities.sh.coords
-        ], {
-            color: '#DC143C',
-            weight: 3,
-            opacity: 0.6,
-            dashArray: '10, 10'
-        }).addTo(map);
-
-        const sidebar = document.getElementById('sidebar');
-        
-        tripData.forEach((trip) => {
-            const card = document.createElement('div');
-            card.className = 'day-card';
-            card.id = 'day-' + trip.day;
+        function initializeUI() {
+            const mainContainer = document.getElementById('mainCities');
+            const bonusContainer = document.getElementById('bonusCities');
             
-            const activitiesHTML = trip.activities.map(activity => 
-                '<div class="activity">' +
-                '<div class="activity-title">' + activity.title + '</div>' +
-                '<div class="activity-detail">' + activity.detail + '</div>' +
-                '</div>'
-            ).join('');
-            
-            const transportHTML = trip.transport ? 
-                '<div class="transport">' +
-                '<strong>Next Stop:</strong>' +
-                '<div class="transport-detail">' + trip.transport + '</div>' +
-                '</div>' : '';
-            
-            const nightsHTML = trip.nights ? 
-                '<div class="nights">📍 Staying ' + trip.nights + '</div>' : '';
-            
-            card.innerHTML = 
-                '<div class="day-header">' +
-                '<div class="day-number">' + trip.day + '</div>' +
-                '<div class="day-info">' +
-                '<h3>' + trip.title + '</h3>' +
-                '<div class="date">' + trip.date + '</div>' +
-                '</div>' +
-                '<div class="city-badge ' + trip.badge + '">' + trip.title.split(' ')[0].toUpperCase() + '</div>' +
-                '</div>' +
-                nightsHTML +
-                '<div class="activities">' + activitiesHTML + '</div>' +
-                transportHTML;
-            
-            card.addEventListener('click', function() {
-                document.querySelectorAll('.day-card').forEach(c => c.classList.remove('active'));
-                card.classList.add('active');
+            Object.entries(cities).forEach(([key, city]) => {
+                const cityDiv = createCitySelector(key, city);
+                if (city.type === 'main') {
+                    mainContainer.appendChild(cityDiv);
+                } else {
+                    bonusContainer.appendChild(cityDiv);
+                }
                 
-                if (trip.city && cities[trip.city]) {
-                    map.setView(cities[trip.city].coords, 10);
-                    markers[trip.city].openPopup();
+                markers[key] = L.circleMarker(city.coords, {
+                    radius: 10,
+                    fillColor: city.color,
+                    color: '#fff',
+                    weight: 2,
+                    opacity: 0.5,
+                    fillOpacity: 0.3
+                }).addTo(map).bindPopup(`<strong>${city.name}</strong><br>${city.desc}`);
+            });
+        }
+
+        function createCitySelector(key, city) {
+            const div = document.createElement('div');
+            div.className = 'city-selector';
+            div.id = 'city-' + key;
+            
+            const badge = city.type === 'main' ? 
+                '<span class="badge badge-main">MAIN</span>' : 
+                '<span class="badge badge-bonus">BONUS</span>';
+            const spaBadge = city.hasSpa ? '<span class="badge badge-spa">🧖 SPA</span>' : '';
+            
+            div.innerHTML = `
+                <input type="checkbox" class="checkbox" id="check-${key}">
+                <div class="city-info" data-city="${key}">
+                    <div class="city-name">${city.name}${badge}${spaBadge}</div>
+                    <div class="city-desc">${city.desc}</div>
+                </div>
+                <div class="nights-control">
+                    <button class="nights-btn" data-action="decrease" data-city="${key}">−</button>
+                    <div class="nights-display" id="nights-${key}">${city.defaultNights}N</div>
+                    <button class="nights-btn" data-action="increase" data-city="${key}">+</button>
+                </div>
+            `;
+            
+            const checkbox = div.querySelector('.checkbox');
+            checkbox.addEventListener('change', () => toggleCity(key));
+            
+            const cityInfo = div.querySelector('.city-info');
+            cityInfo.addEventListener('click', () => {
+                checkbox.checked = !checkbox.checked;
+                toggleCity(key);
+            });
+            
+            div.querySelectorAll('.nights-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    adjustNights(key, btn.dataset.action);
+                });
+            });
+            
+            return div;
+        }
+
+        function toggleCity(key) {
+            const checkbox = document.getElementById('check-' + key);
+            const cityDiv = document.getElementById('city-' + key);
+            
+            if (checkbox.checked) {
+                selectedCities[key] = {
+                    ...cities[key],
+                    nights: cities[key].defaultNights
+                };
+                cityDiv.classList.add('selected');
+                markers[key].setStyle({ opacity: 1, fillOpacity: 0.9, radius: 12 });
+            } else {
+                delete selectedCities[key];
+                cityDiv.classList.remove('selected');
+                markers[key].setStyle({ opacity: 0.5, fillOpacity: 0.3, radius: 10 });
+            }
+            
+            updateSummary();
+            updateRoute();
+        }
+
+        function adjustNights(key, action) {
+            if (!selectedCities[key]) return;
+            
+            const city = cities[key];
+            let currentNights = selectedCities[key].nights;
+            
+            if (action === 'increase' && currentNights < city.maxNights) {
+                currentNights++;
+            } else if (action === 'decrease' && currentNights > city.minNights) {
+                currentNights--;
+            }
+            
+            selectedCities[key].nights = currentNights;
+            document.getElementById('nights-' + key).textContent = currentNights + 'N';
+            
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const totalNights = Object.values(selectedCities).reduce((sum, city) => sum + city.nights, 0);
+            const citiesCount = Object.keys(selectedCities).length;
+            const budget = calculateTotalBudget();
+            
+            document.getElementById('daysInChina').textContent = totalNights + ' nights';
+            document.getElementById('citiesCount').textContent = citiesCount;
+            document.getElementById('budgetEst').textContent = '$' + budget.toLocaleString() + ' CAD';
+            
+            if (totalNights > MAX_DAYS_IN_CHINA) {
+                document.getElementById('daysInChina').style.color = '#E74C3C';
+            } else {
+                document.getElementById('daysInChina').style.color = 'white';
+            }
+            
+            updateLiveBudget();
+            updateWarningMessage(totalNights);
+        }
+        
+        function updateWarningMessage(totalNights) {
+            const routeDisplay = document.getElementById('routeDisplay');
+            
+            if (totalNights > MAX_DAYS_IN_CHINA) {
+                routeDisplay.innerHTML = `<div class="alert alert-warning">⚠️ <strong>Warning:</strong> You have ${totalNights} nights selected but only ${MAX_DAYS_IN_CHINA} nights available (Apr 12-26). Please reduce nights!</div>`;
+            } else if (totalNights > 0) {
+                const remaining = MAX_DAYS_IN_CHINA - totalNights;
+                routeDisplay.innerHTML = `<div class="alert alert-success">✅ Perfect! ${totalNights} nights selected. You have ${remaining} night${remaining !== 1 ? 's' : ''} remaining.</div>`;
+            } else {
+                routeDisplay.innerHTML = '';
+            }
+        }
+
+        function calculateTotalBudget() {
+            const breakdown = calculateBudgetBreakdown();
+            return breakdown.total;
+        }
+
+        function calculateBudgetBreakdown() {
+            const route = optimizeRoute();
+            const lastCity = route[route.length - 1];
+            
+            let outboundFlight = 839;
+            let returnFlight = returnFlightPrices[lastCity] || 800;
+            let internalFlights = 0;
+            let hotels = 0;
+            let food = 0;
+            let activities = 0;
+            let transport = 0;
+            
+            Object.values(selectedCities).forEach(city => {
+                hotels += city.nights * city.costPerNight;
+                food += city.nights * city.dailyFood;
+                
+                const essentialCost = city.activities.essential.reduce((sum, act) => sum + (act.cost * 0.2), 0);
+                activities += essentialCost;
+            });
+            
+            const selected = Object.keys(selectedCities);
+            if (selected.includes('chengdu') && selected.includes('beijing')) {
+                internalFlights += 175;
+            }
+            
+            transport = Object.keys(selectedCities).length * 50;
+            
+            const total = Math.round(outboundFlight + returnFlight + internalFlights + hotels + food + activities + transport);
+            
+            return { outboundFlight, returnFlight, internalFlights, hotels, food, activities: Math.round(activities), transport, total, lastCity };
+        }
+        
+        function updateLiveBudget() {
+            const breakdown = calculateBudgetBreakdown();
+            const liveBudgetDiv = document.getElementById('liveBudgetBreakdown');
+            
+            if (Object.keys(selectedCities).length === 0) {
+                liveBudgetDiv.style.display = 'none';
+                return;
+            }
+            
+            liveBudgetDiv.style.display = 'block';
+            
+            const totalNights = Object.values(selectedCities).reduce((sum, city) => sum + city.nights, 0);
+            const lastCityName = selectedCities[breakdown.lastCity]?.name || 'Last City';
+            
+            document.getElementById('live-flights').textContent = '$' + (breakdown.outboundFlight + breakdown.returnFlight + breakdown.internalFlights).toLocaleString();
+            
+            let flightDetailsText = `Montreal→Hong Kong: $${breakdown.outboundFlight}`;
+            if (breakdown.lastCity) {
+                flightDetailsText += ` • ${lastCityName}→Toronto: $${breakdown.returnFlight}`;
+            }
+            if (breakdown.internalFlights > 0) {
+                flightDetailsText += ` • Internal: $${breakdown.internalFlights}`;
+            }
+            document.getElementById('flight-details').textContent = flightDetailsText;
+            
+            document.getElementById('live-hotels').textContent = '$' + breakdown.hotels.toLocaleString();
+            document.getElementById('hotel-details').textContent = `${totalNights} nights • Avg $${Math.round(breakdown.hotels / totalNights)}/night`;
+            
+            document.getElementById('live-food').textContent = '$' + breakdown.food.toLocaleString();
+            
+            document.getElementById('live-activities').textContent = '$' + breakdown.activities.toLocaleString();
+            const activityCount = Object.values(selectedCities).reduce((sum, city) => sum + city.activities.essential.filter(a => !a.isSpa).length, 0);
+            document.getElementById('activity-details').textContent = `${activityCount} essential activities • Click to see details`;
+            
+            document.getElementById('live-transport').textContent = '$' + breakdown.transport.toLocaleString();
+            document.getElementById('transport-details').textContent = `Trains & buses between ${Object.keys(selectedCities).length} cities`;
+            
+            document.getElementById('live-total').textContent = '$' + breakdown.total.toLocaleString();
+            document.getElementById('live-total-4').textContent = '$' + (breakdown.total * 4).toLocaleString() + ' CAD';
+            
+            populateActivityBreakdown();
+            populateHotelBreakdown();
+        }
+        
+        function populateActivityBreakdown() {
+            const breakdownDiv = document.getElementById('activity-breakdown');
+            let html = '<div style="font-weight: 600; color: #2C3E50; margin-bottom: 10px;">Activities by City:</div>';
+            
+            let totalActivitiesCost = 0;
+            
+            Object.entries(selectedCities).forEach(([cityKey, city]) => {
+                const essentialActivities = city.activities.essential.filter(a => !a.isSpa);
+                const cityTotal = essentialActivities.reduce((sum, activity) => sum + activity.cost, 0);
+                totalActivitiesCost += cityTotal;
+                
+                if (essentialActivities.length > 0) {
+                    html += `
+                        <div style="margin-bottom: 12px; padding: 8px; background: white; border-radius: 4px;">
+                            <div style="font-weight: 600; color: ${city.color}; margin-bottom: 6px;">
+                                ${city.name} (${essentialActivities.length} activities)
+                            </div>
+                    `;
+                    
+                    essentialActivities.forEach(activity => {
+                        const costCAD = Math.round(activity.cost * 0.2);
+                        html += `
+                            <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 0.9em; border-bottom: 1px dotted #e0e0e0;">
+                                <span style="color: #555;">• ${activity.name}</span>
+                                <span style="color: #27AE60; font-weight: 600;">¥${activity.cost} ($${costCAD})</span>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `
+                            <div style="display: flex; justify-content: space-between; padding: 6px 0 0 0; margin-top: 4px; font-weight: 600; color: ${city.color};">
+                                <span>Subtotal:</span>
+                                <span>$${Math.round(cityTotal * 0.2)}</span>
+                            </div>
+                        </div>
+                    `;
                 }
             });
             
-            sidebar.appendChild(card);
+            html += `
+                <div style="border-top: 2px solid #27AE60; padding-top: 8px; margin-top: 8px; display: flex; justify-content: space-between; font-weight: 700; font-size: 1.05em; color: #27AE60;">
+                    <span>Total Activities:</span>
+                    <span>$${Math.round(totalActivitiesCost * 0.2)}</span>
+                </div>
+            `;
+            
+            breakdownDiv.innerHTML = html;
+        }
+        
+        function populateHotelBreakdown() {
+            const breakdownDiv = document.getElementById('hotel-breakdown');
+            let html = '<div style="font-weight: 600; color: #2C3E50; margin-bottom: 10px;">Hotels by City:</div>';
+            
+            let totalHotelCost = 0;
+            
+            Object.entries(selectedCities).forEach(([cityKey, city]) => {
+                const cityHotelCost = city.nights * city.costPerNight;
+                totalHotelCost += cityHotelCost;
+                
+                html += `
+                    <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.95em; border-bottom: 1px dotted #e0e0e0;">
+                        <span style="color: ${city.color}; font-weight: 600;">${city.name}</span>
+                        <span style="color: #555;">${city.nights} night${city.nights > 1 ? 's' : ''} × $${city.costPerNight}/night</span>
+                        <span style="color: #27AE60; font-weight: 600;">$${cityHotelCost}</span>
+                    </div>
+                `;
+            });
+            
+            html += `
+                <div style="border-top: 2px solid #27AE60; padding-top: 8px; margin-top: 8px; display: flex; justify-content: space-between; font-weight: 700; font-size: 1.05em; color: #27AE60;">
+                    <span>Total Hotels:</span>
+                    <span>$${totalHotelCost}</span>
+                </div>
+            `;
+            
+            breakdownDiv.innerHTML = html;
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const activityHeader = document.getElementById('activities-header');
+                const activityBreakdown = document.getElementById('activity-breakdown');
+                
+                if (activityHeader) {
+                    activityHeader.addEventListener('click', function() {
+                        if (activityBreakdown.style.display === 'none') {
+                            activityBreakdown.style.display = 'block';
+                            this.querySelector('span span').textContent = '▲ Click to hide';
+                        } else {
+                            activityBreakdown.style.display = 'none';
+                            this.querySelector('span span').textContent = '▼ Click for details';
+                        }
+                    });
+                }
+                
+                const hotelHeader = document.getElementById('hotels-header');
+                const hotelBreakdown = document.getElementById('hotel-breakdown');
+                
+                if (hotelHeader) {
+                    hotelHeader.addEventListener('click', function() {
+                        if (hotelBreakdown.style.display === 'none') {
+                            hotelBreakdown.style.display = 'block';
+                            this.querySelector('span span').textContent = '▲ Click to hide';
+                        } else {
+                            hotelBreakdown.style.display = 'none';
+                            this.querySelector('span span').textContent = '▼ Click for details';
+                        }
+                    });
+                }
+            }, 100);
         });
 
-        setTimeout(function() {
-            const hongKongCard = document.getElementById('day-2');
-            if (hongKongCard) {
-                hongKongCard.click();
+        function optimizeRoute() {
+            const selected = Object.keys(selectedCities);
+            if (selected.length === 0) return [];
+            
+            let route = [];
+            let remaining = [...selected];
+            
+            if (remaining.includes('hongkong')) {
+                route.push('hongkong');
+                remaining = remaining.filter(c => c !== 'hongkong');
             }
-        }, 500);
+            
+            while (remaining.length > 0) {
+                const current = route[route.length - 1] || 'hongkong';
+                const currentCity = cities[current];
+                
+                let nearest = remaining[0];
+                let minDist = distance(currentCity.coords, cities[nearest].coords);
+                
+                remaining.forEach(cityKey => {
+                    const dist = distance(currentCity.coords, cities[cityKey].coords);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        nearest = cityKey;
+                    }
+                });
+                
+                route.push(nearest);
+                remaining = remaining.filter(c => c !== nearest);
+            }
+            
+            return route;
+        }
+
+        function distance(coord1, coord2) {
+            const [lat1, lon1] = coord1;
+            const [lat2, lon2] = coord2;
+            return Math.sqrt(Math.pow(lat2 - lat1, 2) + Math.pow(lon2 - lon1, 2));
+        }
+
+        function updateRoute() {
+            const selected = Object.keys(selectedCities);
+            if (selected.length >= 2) {
+                const route = optimizeRoute();
+                displayRoute(route);
+                drawRouteOnMap(route);
+                displayFlightInfo(route);
+            } else {
+                displayRoute([]);
+                document.getElementById('flightInfo').innerHTML = '';
+                if (routeLine) {
+                    map.removeLayer(routeLine);
+                    routeLine = null;
+                }
+            }
+        }
+
+        function displayRoute(route) {
+            // Route display handled by warning message
+        }
+
+        function displayFlightInfo(route) {
+            if (route.length === 0) return;
+            
+            const lastCity = route[route.length - 1];
+            const lastCityName = selectedCities[lastCity].name;
+            const returnPrice = returnFlightPrices[lastCity];
+            
+            const flightInfo = document.getElementById('flightInfo');
+            flightInfo.innerHTML = `
+                <div class="flight-info">
+                    <h3 style="margin-bottom: 10px; color: #2C3E50;">✈️ Your Flight Route</h3>
+                    <div class="flight-route">📍 Outbound: Montreal (YUL) → Hong Kong (HKG)</div>
+                    <div style="font-size: 0.85em; color: #7F8C8D; margin: 3px 0 10px 25px;">
+                        April 10, 18:00 departure (~18 hrs) • CAD $839
+                    </div>
+                    
+                    <div class="flight-route">📍 Return: ${lastCityName} → Toronto (YYZ)</div>
+                    <div style="font-size: 0.85em; color: #7F8C8D; margin: 3px 0 0 25px;">
+                        Depart April 25 evening, arrive April 26 • CAD $${returnPrice}
+                    </div>
+                </div>
+            `;
+        }
+
+        function drawRouteOnMap(route) {
+            if (routeLine) {
+                map.removeLayer(routeLine);
+            }
+            
+            if (route.length < 2) return;
+            
+            const coords = route.map(key => cities[key].coords);
+            routeLine = L.polyline(coords, {
+                color: '#DC143C',
+                weight: 3,
+                opacity: 0.7,
+                dashArray: '10, 10'
+            }).addTo(map);
+            
+            map.fitBounds(routeLine.getBounds(), { padding: [50, 50] });
+        }
+
+        function generateFullItinerary() {
+            const route = optimizeRoute();
+            
+            if (route.length === 0) {
+                alert('Please select at least 2 cities first!');
+                return;
+            }
+            
+            const totalNights = route.reduce((sum, key) => sum + selectedCities[key].nights, 0);
+            
+            if (totalNights > MAX_DAYS_IN_CHINA) {
+                alert(`⚠️ You have ${totalNights} nights selected but only ${MAX_DAYS_IN_CHINA} nights available (Apr 12-26).\n\nPlease reduce the number of nights to fit within your dates!`);
+                return;
+            }
+            
+            const spaCity = findBestSpaLocation(route);
+            const itinerary = generateDayByDay(route, spaCity);
+            
+            displayItinerary(itinerary);
+            displayBudgetBreakdown();
+            
+            document.getElementById('itinerarySection').classList.add('visible');
+            document.getElementById('budgetSection').classList.add('visible');
+            
+            setTimeout(() => {
+                document.getElementById('itinerarySection').scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        }
+
+        function findBestSpaLocation(route) {
+            if (route.includes('chengdu')) {
+                return 'chengdu';
+            }
+            
+            let bestCity = null;
+            let maxNights = 0;
+            
+            route.forEach(cityKey => {
+                const city = selectedCities[cityKey];
+                if ((city.region === 'central' || city.region === 'west') && city.nights >= 2 && city.nights > maxNights) {
+                    maxNights = city.nights;
+                    bestCity = cityKey;
+                }
+            });
+            
+            return bestCity || route[Math.floor(route.length / 2)];
+        }
+
+        function generateDayByDay(route, spaCity) {
+            let itinerary = [];
+            let dayCounter = 1;
+            
+            itinerary.push({
+                day: dayCounter++,
+                date: 'April 10',
+                city: 'departure',
+                cityName: 'Montreal → Hong Kong',
+                activities: [
+                    { name: 'Depart Montreal (YUL)', time: '18:00', detail: 'Flight to Hong Kong (~18 hours with connection) • CAD $839', cost: 0 }
+                ]
+            });
+            
+            itinerary.push({
+                day: dayCounter++,
+                date: 'April 12',
+                city: 'arrival',
+                cityName: 'Arrive Hong Kong',
+                activities: [
+                    { name: 'Arrive Hong Kong', time: '~05:00 AM', detail: 'Immigration, Airport Express to city', cost: 0 }
+                ]
+            });
+            
+            route.forEach((cityKey) => {
+                const city = selectedCities[cityKey];
+                const isSpaDay = (cityKey === spaCity);
+                
+                for (let night = 0; night < city.nights; night++) {
+                    const dayActivities = selectActivitiesForDay(cityKey, night, city.nights, isSpaDay);
+                    
+                    itinerary.push({
+                        day: dayCounter++,
+                        date: `April ${11 + itinerary.length}`,
+                        city: cityKey,
+                        cityName: city.name,
+                        cityColor: city.color,
+                        activities: dayActivities,
+                        isSpaDay: isSpaDay && night === city.nights - 1
+                    });
+                }
+            });
+            
+            const lastCity = route[route.length - 1];
+            const lastCityName = selectedCities[lastCity].name;
+            const returnPrice = returnFlightPrices[lastCity];
+            
+            itinerary.push({
+                day: dayCounter++,
+                date: 'April 25-26',
+                city: 'return',
+                cityName: `${lastCityName} → Toronto`,
+                activities: [
+                    { name: `Depart ${lastCityName}`, time: 'Evening Apr 25', detail: `Flight to Toronto (~14-15 hours) • Arrive Apr 26 • CAD $${returnPrice}`, cost: 0 }
+                ]
+            });
+            
+            return itinerary;
+        }
+
+        function selectActivitiesForDay(cityKey, dayIndex, totalNights, hasSpaHere) {
+            const city = cities[cityKey];
+            
+            if (hasSpaHere && dayIndex === totalNights - 1) {
+                const spaActivity = city.activities.essential.find(a => a.isSpa);
+                if (spaActivity) {
+                    return [spaActivity];
+                }
+            }
+            
+            const essentialActivities = city.activities.essential.filter(a => !a.isSpa);
+            const optionalActivities = city.activities.optional;
+            
+            if (totalNights === 1) {
+                return essentialActivities.slice(0, 3);
+            } else if (totalNights === 2) {
+                if (dayIndex === 0) {
+                    return essentialActivities.slice(0, Math.ceil(essentialActivities.length / 2));
+                } else {
+                    return [...essentialActivities.slice(Math.ceil(essentialActivities.length / 2)), ...optionalActivities.slice(0, 1)];
+                }
+            } else {
+                const perDay = Math.ceil(essentialActivities.length / totalNights);
+                const start = dayIndex * perDay;
+                const essentialForDay = essentialActivities.slice(start, start + perDay);
+                
+                if (dayIndex === totalNights - 1 && optionalActivities.length > 0) {
+                    return [...essentialForDay, ...optionalActivities];
+                }
+                
+                return essentialForDay;
+            }
+        }
+
+        function displayItinerary(itinerary) {
+            const content = document.getElementById('itineraryContent');
+            let html = '';
+            
+            itinerary.forEach((day) => {
+                const isSpecial = day.city === 'departure' || day.city === 'arrival' || day.city === 'return';
+                const bgColor = isSpecial ? '#f8f9fa' : '#fff';
+                
+                html += `
+                    <div class="day-card" style="background: ${bgColor}">
+                        <div class="day-header">
+                            <div class="day-number">Day ${day.day}</div>
+                            <div style="flex: 1; text-align: right;">
+                                <div style="color: ${day.cityColor || '#2C3E50'}; font-size: 1.1em; font-weight: 600;">${day.cityName}</div>
+                                <div style="font-size: 0.85em; color: #7F8C8D;">${day.date}</div>
+                                ${day.isSpaDay ? '<span class="badge badge-spa">🧖 24HR SPA</span>' : ''}
+                            </div>
+                        </div>
+                `;
+                
+                day.activities.forEach(activity => {
+                    const isSpa = activity.isSpa || false;
+                    const activityClass = isSpa ? 'activity-item spa-highlight' : 'activity-item';
+                    
+                    html += `
+                        <div class="${activityClass}">
+                            <div class="activity-time">${activity.time}</div>
+                            <div class="activity-name">${activity.name}</div>
+                            <div class="activity-detail">${activity.detail}</div>
+                            ${activity.cost > 0 ? `<div class="activity-cost">¥${activity.cost} (~CAD $${Math.round(activity.cost * 0.2)})</div>` : ''}
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            });
+            
+            content.innerHTML = html;
+        }
+
+        function displayBudgetBreakdown() {
+            const breakdown = calculateBudgetBreakdown();
+            const content = document.getElementById('budgetContent');
+            
+            const lastCityName = selectedCities[breakdown.lastCity]?.name || 'Last City';
+            
+            const html = `
+                <div class="budget-breakdown">
+                    <div class="budget-category">
+                        <span class="budget-label">✈️ Montreal → Hong Kong (Apr 10)</span>
+                        <span class="budget-amount">$${breakdown.outboundFlight.toLocaleString()}</span>
+                    </div>
+                    <div class="budget-category">
+                        <span class="budget-label">✈️ ${lastCityName} → Toronto (Apr 25-26)</span>
+                        <span class="budget-amount">$${breakdown.returnFlight.toLocaleString()}</span>
+                    </div>
+                    ${breakdown.internalFlights > 0 ? `
+                    <div class="budget-category">
+                        <span class="budget-label">✈️ Internal Flights (within China)</span>
+                        <span class="budget-amount">$${breakdown.internalFlights.toLocaleString()}</span>
+                    </div>
+                    ` : ''}
+                    <div class="budget-category">
+                        <span class="budget-label">🏨 Hotels (${Object.values(selectedCities).reduce((sum, c) => sum + c.nights, 0)} nights)</span>
+                        <span class="budget-amount">$${breakdown.hotels.toLocaleString()}</span>
+                    </div>
+                    <div class="budget-category">
+                        <span class="budget-label">🍜 Food & Drinks</span>
+                        <span class="budget-amount">$${breakdown.food.toLocaleString()}</span>
+                    </div>
+                    <div class="budget-category">
+                        <span class="budget-label">🎯 Activities & Entrance Fees</span>
+                        <span class="budget-amount">$${breakdown.activities.toLocaleString()}</span>
+                    </div>
+                    <div class="budget-category">
+                        <span class="budget-label">🚄 Internal Transport (trains/buses)</span>
+                        <span class="budget-amount">$${breakdown.transport.toLocaleString()}</span>
+                    </div>
+                    <div class="budget-category">
+                        <span class="budget-label">TOTAL PER PERSON</span>
+                        <span class="budget-amount">$${breakdown.total.toLocaleString()} CAD</span>
+                    </div>
+                </div>
+                
+                <div class="alert alert-success">
+                    <strong>💡 For 4 People:</strong> Total trip cost approximately $${(breakdown.total * 4).toLocaleString()} CAD
+                </div>
+                
+                <div class="alert alert-info">
+                    <strong>✅ Flight Route:</strong> Montreal → Hong Kong on Apr 10, then ${lastCityName} → Toronto arriving Apr 26<br>
+                    <strong>📝 Note:</strong> Return flight price varies by departure city. Leaving from ${lastCityName}: CAD $${breakdown.returnFlight}
+                </div>
+            `;
+            
+            content.innerHTML = html;
+        }
+
+        function saveTrip() {
+            const tripData = {
+                cities: selectedCities,
+                route: optimizeRoute(),
+                tripDates: { start: '2026-04-10', end: '2026-04-26' },
+                timestamp: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(tripData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'china-trip-apr-2026.json';
+            link.click();
+            
+            alert('✅ Your trip has been saved!');
+        }
+
+        function resetAll() {
+            if (!confirm('Reset everything?')) return;
+            
+            selectedCities = {};
+            
+            document.querySelectorAll('.checkbox').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.city-selector').forEach(div => div.classList.remove('selected'));
+            
+            Object.entries(cities).forEach(([key, city]) => {
+                document.getElementById('nights-' + key).textContent = city.defaultNights + 'N';
+                markers[key].setStyle({ opacity: 0.5, fillOpacity: 0.3, radius: 10 });
+            });
+            
+            if (routeLine) {
+                map.removeLayer(routeLine);
+                routeLine = null;
+            }
+            
+            document.getElementById('itinerarySection').classList.remove('visible');
+            document.getElementById('budgetSection').classList.remove('visible');
+            document.getElementById('flightInfo').innerHTML = '';
+            
+            updateSummary();
+            displayRoute([]);
+        }
+
+        document.getElementById('generateBtn').addEventListener('click', generateFullItinerary);
+        document.getElementById('saveBtn').addEventListener('click', saveTrip);
+        document.getElementById('resetBtn').addEventListener('click', resetAll);
+
+        initializeUI();
+        updateSummary();
     </script>
 </body>
 </html>
