@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>China Adventure 2026 - Interactive Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        #header {
+            background: linear-gradient(135deg, #DC143C 0%, #E74C3C 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+        
+        #header h1 {
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+        
+        #header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+        
+        #container {
+            display: flex;
+            height: calc(100vh - 100px);
+        }
+        
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+        
+        #sidebar {
+            width: 400px;
+            background: white;
+            overflow-y: auto;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .day-card {
+            padding: 20px;
+            border-bottom: 2px solid #f0f0f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .day-card:hover {
+            background: #f8f9fa;
+        }
+        
+        .day-card.active {
+            background: #e8f5e9;
+            border-left: 5px solid #27AE60;
+        }
+        
+        .day-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+        
+        .day-number {
+            background: #DC143C;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            flex-shrink: 0;
+        }
+        
+        .day-info {
+            flex: 1;
+        }
+        
+        .day-info h3 {
+            color: #2C3E50;
+            font-size: 1.15em;
+            margin-bottom: 3px;
+        }
+        
+        .day-info .date {
+            color: #7F8C8D;
+            font-size: 0.9em;
+        }
+        
+        .city-badge {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .badge-hk { background: #FCE4EC; color: #E74C3C; }
+        .badge-zjj { background: #E8F5E9; color: #27AE60; }
+        .badge-cq { background: #FFF8E7; color: #E67E22; }
+        .badge-cd { background: #FFF3E0; color: #F39C12; }
+        .badge-bj { background: #FFEBEE; color: #DC143C; }
+        .badge-sh { background: #E3F2FD; color: #3498DB; }
+        
+        .nights {
+            color: #7F8C8D;
+            font-size: 0.85em;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+        
+        .activities {
+            margin-top: 15px;
+        }
+        
+        .activity {
+            padding: 8px 12px;
+            border-left: 3px solid #3498DB;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .activity-title {
+            font-weight: 600;
+            color: #2C3E50;
+            font-size: 0.95em;
+            margin-bottom: 3px;
+        }
+        
+        .activity-detail {
+            font-size: 0.85em;
+            color: #555;
+            line-height: 1.4;
+        }
+        
+        .transport {
+            margin-top: 15px;
+            padding: 12px;
+            background: #E3F2FD;
+            border-radius: 8px;
+            border-left: 4px solid #3498DB;
+        }
+        
+        .transport strong {
+            color: #2C3E50;
+            display: block;
+            margin-bottom: 4px;
+        }
+        
+        .transport-detail {
+            font-size: 0.9em;
+            color: #2C3E50;
+        }
+        
+        @media (max-width: 768px) {
+            #container {
+                flex-direction: column;
+            }
+            
+            #sidebar {
+                width: 100%;
+                height: 50vh;
+            }
+            
+            #map {
+                height: 50vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>🇨🇳 China Adventure 2026</h1>
+        <p>April 10-26 • 16 Days • 6 Cities • Montreal → Toronto</p>
+    </div>
+    
+    <div id="container">
+        <div id="map"></div>
+        <div id="sidebar"></div>
+    </div>
+
+    <script>
+        const map = L.map('map').setView([32, 110], 5);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 18
+        }).addTo(map);
+
+        const cities = {
+            hk: { coords: [22.3, 114.2], name: 'Hong Kong', color: '#E74C3C' },
+            zjj: { coords: [29.1, 110.5], name: 'Zhangjiajie', color: '#27AE60' },
+            cq: { coords: [29.6, 106.5], name: 'Chongqing', color: '#E67E22' },
+            cd: { coords: [30.7, 104.1], name: 'Chengdu', color: '#F39C12' },
+            bj: { coords: [39.9, 116.4], name: 'Beijing', color: '#DC143C' },
+            sh: { coords: [31.2, 121.5], name: 'Shanghai', color: '#3498DB' }
+        };
+
+        const tripData = [
+            {
+                day: 1,
+                date: 'April 10',
+                title: 'Departure from Montreal',
+                city: null,
+                badge: 'badge-hk',
+                activities: [
+                    { title: '✈️ Flight YUL → HKG', detail: 'Depart 18:00, overnight flight (~18 hours with connection)' }
+                ],
+                transport: null
+            },
+            {
+                day: 2,
+                date: 'April 12-13',
+                title: 'Hong Kong',
+                city: 'hk',
+                badge: 'badge-hk',
+                nights: '1 night',
+                activities: [
+                    { title: 'Victoria Peak 🏔️', detail: 'Peak Tram + Sky Terrace ⭐4.6★ - HKD $100 (~CAD $18)' },
+                    { title: 'Star Ferry ⛴️', detail: 'HKD $2.70 - 10 min ride, best at sunset!' },
+                    { title: 'Tim Ho Wan Dim Sum 🥟', detail: 'Michelin-starred! HKD $50-80/person' },
+                    { title: 'Temple Street Night Market 🌙', detail: 'After 7pm - street food, fortune tellers' }
+                ],
+                transport: '🚄 April 13, 08:30 → Zhangjiajie (6.5 hours direct train, ¥769 ~CAD $110)'
+            },
+            {
+                day: 3,
+                date: 'April 13-16',
+                title: 'Zhangjiajie - Avatar Mountains',
+                city: 'zjj',
+                badge: 'badge-zjj',
+                nights: '3 nights',
+                activities: [
+                    { title: 'Day 1: Avatar Forest Park 🏔️', detail: '3-day pass ¥228, Bailong Elevator ¥72 ⚠️ BOOK 1-2 WEEKS AHEAD!' },
+                    { title: 'Day 2: Tianmen Mountain 🚠', detail: 'World\'s longest cable car 7.5km, Glass Skywalk ¥278 ⚠️ BOOK AHEAD!' },
+                    { title: 'Day 3: Glass Bridge 🌉', detail: '430m long, 300m high - World\'s highest! ¥138' }
+                ],
+                transport: '🚄 April 16, Evening → Chongqing (2-4 hours train, ¥200-300)'
+            },
+            {
+                day: 4,
+                date: 'April 16-18',
+                title: 'Chongqing - Cyberpunk City',
+                city: 'cq',
+                badge: 'badge-cq',
+                nights: '2 nights',
+                activities: [
+                    { title: 'Liziba Metro Station 🚇', detail: 'Train goes THROUGH 19-story building! Visit ~noon' },
+                    { title: 'Eling Park 🌳', detail: 'FREE panoramic city views from hilltop tower' },
+                    { title: 'Hongya Cave 🏮', detail: 'After 7pm when LIT UP - looks like Spirited Away!' },
+                    { title: 'Chongqing Hotpot 🌶️', detail: 'Spiciest in China! ¥80-120/person - the ultimate experience' }
+                ],
+                transport: '🚄 April 18, ~13:00 → Chengdu (1.5 hours train, ¥56-150)'
+            },
+            {
+                day: 5,
+                date: 'April 18-20',
+                title: 'Chengdu - Pandas + 24hr Spa',
+                city: 'cd',
+                badge: 'badge-cd',
+                nights: '2 nights',
+                activities: [
+                    { title: 'Chengdu Panda Base 🐼', detail: '⚠️ ARRIVE 7:30 AM! Pandas most active at breakfast. Entry ¥58' },
+                    { title: 'Cheersum 24-Hour Spa 🧖', detail: '¥300 (~CAD $60) - SLEEP OVERNIGHT in pods!' },
+                    { title: 'Spa Includes:', detail: '7 floors: hot tubs, saunas, pools, FREE unlimited buffet (4 meals/day!), gaming room, 2 cinemas with BEDS, ice cream ALL DAY' }
+                ],
+                transport: '✈️ April 21, Afternoon flight → Beijing (3 hours, CAD $150-200)'
+            },
+            {
+                day: 6,
+                date: 'April 21-23',
+                title: 'Beijing - Imperial Capital',
+                city: 'bj',
+                badge: 'badge-bj',
+                nights: '3 nights',
+                activities: [
+                    { title: 'Mutianyu Great Wall 🏯', detail: 'Full day tour - Cable car UP, TOBOGGAN DOWN! ~¥400 (CAD $80)' },
+                    { title: 'Forbidden City 🏛️', detail: '⚠️ BOOK ONLINE 10 DAYS AHEAD - SELLS OUT! ¥60, 980 buildings' },
+                    { title: 'Jingshan Park 🌳', detail: 'Best Forbidden City view from hilltop - ¥2 only!' },
+                    { title: 'Beijing Duck Dinner 🦆', detail: 'Quanjude or Dadong restaurant - the ultimate Beijing meal' }
+                ],
+                transport: '🚄 April 23, ~18:00 → Shanghai (4.5-5 hours train, ¥550-900)'
+            },
+            {
+                day: 7,
+                date: 'April 23-26',
+                title: 'Shanghai - Modern Marvel',
+                city: 'sh',
+                badge: 'badge-sh',
+                nights: '3 nights',
+                activities: [
+                    { title: 'The Bund 🌆', detail: '💡 6:30-7:30PM = GOLDEN HOUR! Best photos of colonial + futuristic skyline' },
+                    { title: 'Shanghai Tower 🏙️', detail: '632m - 2nd tallest in WORLD! Fastest elevator. ¥180 (~CAD $36)' },
+                    { title: 'Yu Garden 🏯', detail: 'Ming Dynasty classical garden - ¥40' },
+                    { title: 'Jia Jia Tang Bao 🥟', detail: 'Shanghai\'s BEST xiaolongbao (soup dumplings) - often a line but WORTH IT!' }
+                ],
+                transport: '✈️ April 26 (Saturday) → Toronto YYZ (14-15 hours direct flight, CAD $750-900)'
+            }
+        ];
+
+        const markers = {};
+        Object.entries(cities).forEach(([key, city]) => {
+            markers[key] = L.circleMarker(city.coords, {
+                radius: 12,
+                fillColor: city.color,
+                color: '#fff',
+                weight: 3,
+                opacity: 1,
+                fillOpacity: 0.9
+            }).addTo(map).bindPopup('<strong style="color:' + city.color + '; font-size: 1.1em;">' + city.name + '</strong>');
+        });
+
+        L.polyline([
+            cities.hk.coords,
+            cities.zjj.coords,
+            cities.cq.coords,
+            cities.cd.coords,
+            cities.bj.coords,
+            cities.sh.coords
+        ], {
+            color: '#DC143C',
+            weight: 3,
+            opacity: 0.6,
+            dashArray: '10, 10'
+        }).addTo(map);
+
+        const sidebar = document.getElementById('sidebar');
+        
+        tripData.forEach((trip) => {
+            const card = document.createElement('div');
+            card.className = 'day-card';
+            card.id = 'day-' + trip.day;
+            
+            const activitiesHTML = trip.activities.map(activity => 
+                '<div class="activity">' +
+                '<div class="activity-title">' + activity.title + '</div>' +
+                '<div class="activity-detail">' + activity.detail + '</div>' +
+                '</div>'
+            ).join('');
+            
+            const transportHTML = trip.transport ? 
+                '<div class="transport">' +
+                '<strong>Next Stop:</strong>' +
+                '<div class="transport-detail">' + trip.transport + '</div>' +
+                '</div>' : '';
+            
+            const nightsHTML = trip.nights ? 
+                '<div class="nights">📍 Staying ' + trip.nights + '</div>' : '';
+            
+            card.innerHTML = 
+                '<div class="day-header">' +
+                '<div class="day-number">' + trip.day + '</div>' +
+                '<div class="day-info">' +
+                '<h3>' + trip.title + '</h3>' +
+                '<div class="date">' + trip.date + '</div>' +
+                '</div>' +
+                '<div class="city-badge ' + trip.badge + '">' + trip.title.split(' ')[0].toUpperCase() + '</div>' +
+                '</div>' +
+                nightsHTML +
+                '<div class="activities">' + activitiesHTML + '</div>' +
+                transportHTML;
+            
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.day-card').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+                
+                if (trip.city && cities[trip.city]) {
+                    map.setView(cities[trip.city].coords, 10);
+                    markers[trip.city].openPopup();
+                }
+            });
+            
+            sidebar.appendChild(card);
+        });
+
+        setTimeout(function() {
+            const hongKongCard = document.getElementById('day-2');
+            if (hongKongCard) {
+                hongKongCard.click();
+            }
+        }, 500);
+    </script>
+</body>
+</html>
